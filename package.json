@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "dat.gui": "^0.7.9",
+    "openssl": "^2.0.0",
+    "three": "^0.186.1"
+  }
+}

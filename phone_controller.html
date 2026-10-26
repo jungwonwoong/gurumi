@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<title>구르미 자이로 컨트롤러</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    background: #1e1e24;
+    color: white;
+    font-family: Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+button, input {
+    font: inherit;
+}
+
+.drive-controls {
+    position: fixed;
+    inset: 0 auto 0 0;
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    height: 100%;
+    height: 100dvh;
+    gap: 4px;
+    padding: 4px 2px 4px 4px;
+}
+
+.control-btn {
+    flex: 1;
+    min-height: 0;
+    border: 0;
+    border-radius: 14px;
+    background: #3a3f4d;
+    color: white;
+    font-size: clamp(24px, 7vw, 44px);
+    font-weight: bold;
+    touch-action: none;
+}
+
+.control-btn:active,
+.control-btn.pressed {
+    background: #575e70;
+}
+
+#btnBackward {
+    background: #343946;
+}
+
+.info-panel {
+    position: fixed;
+    inset: 0 0 0 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 16px 10px;
+    text-align: center;
+    touch-action: none;
+}
+
+.info-panel > * {
+    pointer-events: none;
+}
+
+#statusText {
+    max-width: 100%;
+    color: #f4a261;
+    font-size: clamp(16px, 4vw, 24px);
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+#gyroDisplay {
+    color: #2ecc71;
+    font-family: monospace;
+    font-size: clamp(20px, 5vw, 32px);
+}
+
+#orbitHelp {
+    color: #c5cad4;
+    font-size: clamp(11px, 2.8vw, 15px);
+}
+
+.top-controls {
+    position: fixed;
+    z-index: 2;
+    top: max(8px, env(safe-area-inset-top));
+    left: 50%;
+    display: flex;
+    width: min(36vw, 150px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
+    transform: translateX(-50%);
+    border: 1px solid #596071;
+    border-radius: 12px;
+    background: rgba(30, 30, 36, 0.94);
+    text-align: center;
+}
+
+.top-controls label {
+    font-size: 12px;
+}
+
+.top-controls button {
+    min-height: 34px;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 7px;
+    background: #4cc9f0;
+    color: #101318;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#sensorBtn {
+    background: #2a9d8f;
+    color: white;
+}
+
+#screenHint {
+    min-height: 14px;
+    color: #ffd166;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.rotate-hint {
+    display: none;
+}
+
+@media (orientation: portrait) {
+    .rotate-hint {
+        position: fixed;
+        z-index: 3;
+        right: 8px;
+        bottom: 8px;
+        display: block;
+        max-width: 46%;
+        padding: 7px 9px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        font-size: 12px;
+        pointer-events: none;
+    }
+}
+</style>
+</head>
+<body>
+<main>
+    <div class="drive-controls" aria-label="주행 조작">
+        <button class="control-btn" id="btnForward" type="button">▲ 전진</button>
+        <button class="control-btn" id="btnBackward" type="button">▼ 후진</button>
+    </div>
+
+    <section class="info-panel" aria-label="연결 및 자이로 정보">
+        <div id="statusText" role="status">🔴 PC 연결 대기 중</div>
+        <div id="gyroDisplay" aria-live="polite">Pitch: 0.0°</div>
+        <div id="orbitHelp">한 손가락: 화면 회전<br>두 손가락 이동: 화면 이동<br>두 손가락 벌리기/모으기: 확대/축소</div>
+    </section>
+
+    <section class="top-controls" aria-label="연결 및 센서 설정">
+        <button id="sensorBtn" type="button">자이로 센서 시작</button>
+        <div id="screenHint" role="status"></div>
+    </section>
+
+    <div class="rotate-hint">기기를 가로로 돌려 주세요.</div>
+</main>
+
+<script>
+let peer = null;
+let conn = null;
+let currentDriveState = "STOP";
+let rawPitch = 0;
+let sensorListening = false;
+const orbitDelta = { rotateX: 0, rotateY: 0, panX: 0, panY: 0, zoom: 0 };
+
+const statusText = document.getElementById('statusText');
+const screenHint = document.getElementById('screenHint');
+const urlParams = new URLSearchParams(window.location.search);
+const codeParam = urlParams.get('code');
+
+function setConnectionStatus(message, color) {
+    statusText.textContent = message;
+    statusText.style.color = color;
+}
+
+function connectToPC(code) {
+    setConnectionStatus('🟠 PC에 연결 중...', '#f4a261');
+    peer = new Peer();
+    peer.on('open', () => {
+        conn = peer.connect('gurumi-' + code);
+        conn.on('open', () => setConnectionStatus('🟢 PC 연결 완료', '#2ecc71'));
+        conn.on('close', () => {
+            currentDriveState = "STOP";
+            setConnectionStatus('🔴 PC 연결 끊김', '#e74c3c');
+            conn = null;
+            peer = null;
+        });
+        conn.on('error', (error) => {
+            setConnectionStatus(`⚠️ 연결 오류: ${error.message}`, '#ffd166');
+        });
+    });
+    peer.on('error', (error) => {
+        setConnectionStatus(`⚠️ 연결 오류: ${error.message}`, '#ffd166');
+        peer = null;
+        conn = null;
+    });
+}
+
+function handleOrientation(event) {
+    rawPitch = typeof event.beta === 'number' ? Number(event.beta.toFixed(1)) : 0;
+    document.getElementById('gyroDisplay').textContent = `Pitch: ${rawPitch.toFixed(1)}°`;
+}
+
+async function startSensor() {
+    if (!sensorListening) {
+        if (!window.isSecureContext) {
+            screenHint.textContent = '자이로 센서는 신뢰할 수 있는 HTTPS 연결에서만 사용할 수 있습니다.';
+            return;
+        }
+        if (typeof DeviceOrientationEvent === 'undefined') {
+            screenHint.textContent = '이 브라우저는 자이로 센서를 지원하지 않습니다.';
+            return;
+        }
+
+        try {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission !== 'granted') {
+                    screenHint.textContent = '센서 권한을 허용해야 사용할 수 있습니다.';
+                    return;
+                }
+            }
+
+            window.addEventListener('deviceorientation', handleOrientation);
+            sensorListening = true;
+            document.getElementById('sensorBtn').textContent = '자이로 센서 실행 중';
+            screenHint.textContent = '';
+        } catch (error) {
+            screenHint.textContent = `센서 시작 실패: ${error.message}`;
+        }
+    }
+}
+
+document.getElementById('sensorBtn').addEventListener('click', () => {
+    screenHint.textContent = '';
+    startSensor();
+
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen()
+            .then(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                    return screen.orientation.lock('landscape').catch((error) => {
+                        screenHint.textContent = `전체 화면은 켜졌지만 가로 고정은 지원되지 않습니다: ${error.message}`;
+                    });
+                }
+                screenHint.textContent = '전체 화면으로 전환했습니다. 기기를 가로로 돌려 주세요.';
+            })
+            .catch((error) => {
+                screenHint.textContent = `전체 화면으로 전환할 수 없습니다: ${error.message}`;
+            });
+    } else if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch((error) => {
+            screenHint.textContent = `가로 고정 실패: ${error.message}`;
+        });
+    } else if (!document.fullscreenElement) {
+        screenHint.textContent = '전체 화면/가로 고정은 지원되지 않습니다. 기기를 가로로 돌려 주세요.';
+    }
+});
+
+setInterval(() => {
+    if (conn && conn.open) {
+        conn.send({
+            drive: currentDriveState,
+            pitch: rawPitch,
+            orbit: { ...orbitDelta }
+        });
+        orbitDelta.rotateX = 0;
+        orbitDelta.rotateY = 0;
+        orbitDelta.panX = 0;
+        orbitDelta.panY = 0;
+        orbitDelta.zoom = 0;
+    }
+}, 20);
+
+function bindDriveButton(id, state) {
+    const button = document.getElementById(id);
+    button.addEventListener('contextmenu', (event) => event.preventDefault());
+    const stopDriving = (event) => {
+        event.preventDefault();
+        currentDriveState = "STOP";
+        button.classList.remove('pressed');
+    };
+
+    button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        currentDriveState = state;
+        button.classList.add('pressed');
+        button.setPointerCapture(event.pointerId);
+    });
+    button.addEventListener('pointerup', stopDriving);
+    button.addEventListener('pointercancel', stopDriving);
+    button.addEventListener('lostpointercapture', stopDriving);
+}
+
+bindDriveButton('btnForward', 'FORWARD');
+bindDriveButton('btnBackward', 'BACKWARD');
+
+const orbitTouchZone = document.querySelector('.info-panel');
+const orbitPointers = new Map();
+let previousGestureCenter = null;
+let previousPinchDistance = null;
+
+function getGestureCenter() {
+    const points = [...orbitPointers.values()];
+    return points.reduce((center, point) => ({
+        x: center.x + point.x / points.length,
+        y: center.y + point.y / points.length
+    }), { x: 0, y: 0 });
+}
+
+function updateGestureCenter() {
+    previousGestureCenter = orbitPointers.size ? getGestureCenter() : null;
+    previousPinchDistance = orbitPointers.size === 2 ? getPinchDistance() : null;
+}
+
+function getPinchDistance() {
+    const [first, second] = [...orbitPointers.values()];
+    return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
+orbitTouchZone.addEventListener('contextmenu', (event) => event.preventDefault());
+orbitTouchZone.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    orbitTouchZone.setPointerCapture(event.pointerId);
+    orbitPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    updateGestureCenter();
+});
+orbitTouchZone.addEventListener('pointermove', (event) => {
+    if (!orbitPointers.has(event.pointerId)) return;
+
+    orbitPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const center = getGestureCenter();
+    if (previousGestureCenter) {
+        const deltaX = center.x - previousGestureCenter.x;
+        const deltaY = center.y - previousGestureCenter.y;
+
+        if (orbitPointers.size === 1) {
+            orbitDelta.rotateX += deltaX / orbitTouchZone.clientHeight;
+            orbitDelta.rotateY += deltaY / orbitTouchZone.clientHeight;
+        } else {
+            orbitDelta.panX += deltaX / orbitTouchZone.clientWidth;
+            orbitDelta.panY += deltaY / orbitTouchZone.clientHeight;
+            const pinchDistance = getPinchDistance();
+            if (previousPinchDistance !== null) {
+                orbitDelta.zoom += (pinchDistance - previousPinchDistance) / orbitTouchZone.clientWidth;
+            }
+            previousPinchDistance = pinchDistance;
+        }
+    }
+    previousGestureCenter = center;
+});
+
+function endOrbitPointer(event) {
+    if (!orbitPointers.has(event.pointerId)) return;
+    orbitPointers.delete(event.pointerId);
+    if (orbitTouchZone.hasPointerCapture(event.pointerId)) {
+        orbitTouchZone.releasePointerCapture(event.pointerId);
+    }
+    updateGestureCenter();
+}
+
+orbitTouchZone.addEventListener('pointerup', endOrbitPointer);
+orbitTouchZone.addEventListener('pointercancel', endOrbitPointer);
+orbitTouchZone.addEventListener('lostpointercapture', endOrbitPointer);
+
+if (codeParam && /^\d{4}$/.test(codeParam)) {
+    setTimeout(() => connectToPC(codeParam), 500);
+} else {
+    setConnectionStatus('⚠️ QR 코드로 접속해 주세요.', '#ffd166');
+}
+</script>
+</body>
+</html>

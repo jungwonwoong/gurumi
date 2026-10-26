@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="author" content="Sean Bradley" />
+        <title>Car Physics</title>
+        <meta name="description" content="Three.js TypeScript Tutorials by Sean Bradley : https://sbcode.net/threejs" />
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "./node_modules/three/build/three.module.js",
+                    "three/addons/": "./node_modules/three/examples/jsm/",
+                    "dat.gui": "./node_modules/dat.gui/build/dat.gui.module.js",
+                    "cannon-es": "./node_modules/cannon-es/dist/cannon-es.js"
+                }
+            }
+        </script>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="instructions">W,A,S,D or Arrow Keys to Drive. Space to brake. Drag to look around. Scroll to zoom.</div>
+        <div id="camera-preview" aria-label="구루미 정면 카메라 화면">
+            <canvas id="camera-preview-canvas"></canvas>
+            <span id="camera-preview-label">구루미 카메라</span>
+        </div>
+        <aside id="obstacle-menu">
+            <h2>장애물 추가</h2>
+            <button id="obstacle-template" type="button" aria-label="메쉬를 드래그하여 장애물 배치">
+                <canvas id="obstacle-mesh-preview" width="240" height="82"></canvas>
+                <span>메쉬를 드래그하여 배치</span>
+            </button>
+            <div id="obstacle-size-controls" aria-label="장애물 크기 조절">
+                <label class="obstacle-size-control">
+                    <span>X</span>
+                    <input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 X 크기" />
+                    <output id="obstacle-size-x-value" for="obstacle-size-x">0.60</output>
+                </label>
+                <label class="obstacle-size-control">
+                    <span>Y</span>
+                    <input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="장애물 Y 크기" />
+                    <output id="obstacle-size-y-value" for="obstacle-size-y">0.20</output>
+                </label>
+                <label class="obstacle-size-control">
+                    <span>Z</span>
+                    <input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 Z 크기" />
+                    <output id="obstacle-size-z-value" for="obstacle-size-z">0.60</output>
+                </label>
+            </div>
+            <button id="obstacle-delete-toggle" type="button" aria-pressed="false">설치한 직육면체 지우기</button>
+            <p>크기는 계단 높이의 5배까지입니다.<br />바닥이나 박스 위에 드래그하세요. 휠로 회전합니다.<br />삭제 모드에서 설치한 박스를 클릭하세요.</p>
+        </aside>
+        <div id="mobile-joystick" role="application" aria-label="이동 조이스틱">
+            <div id="mobile-joystick-knob"></div>
+        </div>
+        <button id="reset-car" type="button">자세 리셋</button>
+        <script type="module" src="./simulation.js"></script>
+    </body>
+</html>

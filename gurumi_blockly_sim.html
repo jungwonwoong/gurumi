@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>gurumi 3D 시뮬레이션 및 블록코딩</title>
+        
+        <!-- Google Blockly CDN -->
+        <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "./node_modules/three/build/three.module.js",
+                    "three/addons/": "./node_modules/three/examples/jsm/",
+                    "dat.gui": "./node_modules/dat.gui/build/dat.gui.module.js",
+                    "cannon-es": "./node_modules/cannon-es/dist/cannon-es.js"
+                }
+            }
+        </script>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                overflow: hidden;
+                margin: 0px;
+                display: flex;
+                width: 100vw;
+                height: 100vh;
+                font-family: sans-serif;
+                --sim-width: 50vw;
+            }
+
+            /* 왼쪽: 시뮬레이션 영역 */
+            #sim-container {
+                flex: 0 0 var(--sim-width);
+                min-width: 0;
+                height: 100%;
+                position: relative;
+                background-color: #000;
+                overflow: hidden;
+            }
+
+            /* 오른쪽: 블록코딩 영역 */
+            #blockly-container {
+                flex: 1 1 0;
+                min-width: 0;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #resize-handle {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: var(--sim-width);
+                z-index: 10000;
+                display: flex;
+                width: 28px;
+                align-items: center;
+                justify-content: center;
+                transform: translateX(-50%);
+                cursor: col-resize;
+                touch-action: none;
+                outline: none;
+            }
+
+            #resize-handle::before {
+                position: absolute;
+                width: 3px;
+                height: 100%;
+                background: transparent;
+                content: "";
+            }
+
+            #resize-handle::after {
+                z-index: 1;
+                padding: 5px 2px;
+                border: 1px solid rgba(255, 255, 255, 0.65);
+                border-radius: 6px;
+                background: rgba(35, 45, 60, 0.8);
+                color: white;
+                content: "↔";
+                font-size: 14px;
+                opacity: 0;
+                transition: opacity 120ms ease;
+            }
+
+            #resize-handle:hover::before,
+            #resize-handle:focus-visible::before,
+            #resize-handle.dragging::before {
+                background: rgba(70, 140, 230, 0.75);
+            }
+
+            #resize-handle:hover::after,
+            #resize-handle:focus-visible::after,
+            #resize-handle.dragging::after {
+                opacity: 1;
+            }
+
+            #resize-handle:focus-visible::after {
+                outline: 2px solid #4a90e2;
+                outline-offset: 2px;
+            }
+
+            #instructions {
+                color: white;
+                position: absolute;
+                left: 20px;
+                top: 10px;
+                font-family: monospace;
+                pointer-events: none;
+                z-index: 5;
+                background: rgba(0,0,0,0.5);
+                padding: 6px 10px;
+                border-radius: 4px;
+            }
+
+            #run-control-panel {
+                position: absolute;
+                top: 10px;
+                right: 20px;
+                z-index: 10;
+                display: flex;
+                gap: 8px;
+            }
+
+            .btn-sim {
+                padding: 8px 14px;
+                border: 1px solid rgba(255, 255, 255, 0.7);
+                border-radius: 6px;
+                background: rgba(0, 0, 0, 0.75);
+                color: white;
+                font-size: 13px;
+                cursor: pointer;
+            }
+
+            .btn-sim:hover {
+                background: rgba(0, 0, 0, 0.95);
+            }
+
+            #btn-run {
+                background: #27ae60;
+                border-color: #27ae60;
+                font-weight: bold;
+            }
+            #btn-run:hover {
+                background: #219150;
+            }
+
+            #btn-stop {
+                background: #c0392b;
+                border-color: #c0392b;
+                font-weight: bold;
+            }
+            #btn-stop:hover {
+                background: #a93226;
+            }
+
+            #obstacle-menu {
+                position: absolute;
+                top: 50px;
+                left: 20px;
+                z-index: 2;
+                width: 190px;
+                padding: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.75);
+                color: white;
+                font: 14px sans-serif;
+            }
+
+            #obstacle-menu h2 {
+                margin: 0 0 10px;
+                font-size: 16px;
+            }
+
+            #obstacle-template {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #f39c12;
+                border-radius: 5px;
+                background: rgba(243, 156, 18, 0.2);
+                color: white;
+                cursor: grab;
+                touch-action: none;
+            }
+
+            #obstacle-template:active {
+                cursor: grabbing;
+            }
+
+            #obstacle-delete-toggle {
+                width: 100%;
+                margin-top: 8px;
+                padding: 9px;
+                border: 1px solid #e74c3c;
+                border-radius: 5px;
+                background: rgba(231, 76, 60, 0.2);
+                color: white;
+                cursor: pointer;
+            }
+
+            #obstacle-delete-toggle[aria-pressed="true"] {
+                background: #c0392b;
+            }
+
+            #obstacle-menu p {
+                margin: 9px 0 0;
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            #mobile-joystick {
+                position: absolute;
+                left: max(22px, env(safe-area-inset-left));
+                bottom: max(22px, env(safe-area-inset-bottom));
+                z-index: 3;
+                display: none;
+                width: 180px;
+                height: 180px;
+                border: 2px solid rgba(255, 255, 255, 0.42);
+                border-radius: 50%;
+                background: rgba(20, 25, 35, 0.22);
+                box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.12);
+                touch-action: none;
+                user-select: none;
+            }
+
+            #mobile-joystick.visible {
+                display: block;
+            }
+
+            #mobile-joystick-knob {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 80px;
+                height: 80px;
+                border: 2px solid rgba(255, 255, 255, 0.72);
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.32);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+                transform: translate(
+                    calc(-50% + var(--joystick-x, 0px)),
+                    calc(-50% + var(--joystick-y, 0px))
+                );
+                pointer-events: none;
+            }
+        </style>
+        <link rel="stylesheet" href="./style.css" />
+    </head>
+    <body>
+        <!-- 왼쪽: 3D 시뮬레이션 UI -->
+        <div id="sim-container" class="simulation-root">
+            <div id="instructions">블록 코딩으로 gurumi를 구동하세요.</div>
+            <div id="run-control-panel">
+                <button id="btn-run" class="btn-sim" onclick="startBlockCode()">▶ 블록 실행</button>
+                <button id="btn-stop" class="btn-sim" onclick="stopBlockCode()">■ 정지</button>
+            </div>
+
+            <div id="camera-preview" aria-label="구루미 정면 카메라 화면">
+                <canvas id="camera-preview-canvas"></canvas>
+                <span id="camera-preview-label">구루미 카메라</span>
+            </div>
+            <aside id="obstacle-menu">
+                <h2>장애물 추가</h2>
+                <button id="obstacle-template" type="button" aria-label="메쉬를 드래그하여 장애물 배치">
+                    <canvas id="obstacle-mesh-preview" width="240" height="82"></canvas>
+                    <span>메쉬를 드래그하여 배치</span>
+                </button>
+                <div id="obstacle-size-controls" aria-label="장애물 크기 조절">
+                    <label class="obstacle-size-control">
+                        <span>X</span>
+                        <input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 X 크기" />
+                        <output id="obstacle-size-x-value" for="obstacle-size-x">0.60</output>
+                    </label>
+                    <label class="obstacle-size-control">
+                        <span>Y</span>
+                        <input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="장애물 Y 크기" />
+                        <output id="obstacle-size-y-value" for="obstacle-size-y">0.20</output>
+                    </label>
+                    <label class="obstacle-size-control">
+                        <span>Z</span>
+                        <input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 Z 크기" />
+                        <output id="obstacle-size-z-value" for="obstacle-size-z">0.60</output>
+                    </label>
+                </div>
+                <button id="obstacle-delete-toggle" type="button" aria-pressed="false">설치한 직육면체 지우기</button>
+                <p>크기는 계단 높이의 5배까지입니다.<br />바닥이나 박스 위에 드래그하세요. 휠로 회전합니다.<br />삭제 모드에서 설치한 박스를 클릭하세요.</p>
+            </aside>
+            <div id="mobile-joystick" role="application" aria-label="이동 조이스틱">
+                <div id="mobile-joystick-knob"></div>
+            </div>
+            <button id="reset-car" class="btn-sim" type="button">자세 리셋</button>
+        </div>
+
+        <!-- 오른쪽: Blockly 블록코딩 영역 -->
+        <div id="blockly-container"></div>
+        <div id="resize-handle" role="separator" aria-label="시뮬레이션과 블록 코딩 영역 크기 조절" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0"></div>
+
+        <!-- Blockly 툴박스 정의 -->
+        <xml id="toolbox" style="display: none">
+            <category name="이벤트" colour="20">
+                <block type="when_run_button_clicked"></block>
+            </category>
+            <category name="gurumi 동작" colour="230">
+                <block type="set_left_wheel">
+                    <value name="SPEED">
+                        <shadow type="math_number"><field name="NUM">7</field></shadow>
+                    </value>
+                </block>
+                <block type="set_right_wheel">
+                    <value name="SPEED">
+                        <shadow type="math_number"><field name="NUM">7</field></shadow>
+                    </value>
+                </block>
+            </category>
+            <category name="제어" colour="%{BKY_LOOPS_HUE}">
+                <block type="controls_repeat_ext">
+                    <value name="TIMES">
+                        <shadow type="math_number"><field name="NUM">10</field></shadow>
+                    </value>
+                </block>
+                <block type="controls_whileUntil"></block>
+                <block type="controls_if"></block>
+            </category>
+            <category name="연산" colour="%{BKY_MATH_HUE}">
+                <block type="math_number"><field name="NUM">0</field></block>
+                <block type="logic_boolean"></block>
+            </category>
+        </xml>
+
+        <script>
+            // === gurumi 상태 제어용 전역 객체 ===
+            window.gurumi = {
+                leftSpeed: 0,
+                rightSpeed: 0,
+                isBlockControlled: false,
+                executionId: 0,
+                setLeftWheel: function(speed) { this.leftSpeed = Number(speed); },
+                setRightWheel: function(speed) { this.rightSpeed = Number(speed); },
+                isExecutionActive: function(runId) {
+                    return this.isBlockControlled && this.executionId === runId;
+                },
+                yieldToSimulation: function() {
+                    return new Promise(resolve => requestAnimationFrame(resolve));
+                }
+            };
+
+            // === Blockly 커스텀 블록 정의 ===
+            Blockly.Blocks['when_run_button_clicked'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("블록 실행 버튼을 눌렀을 때");
+                    this.appendStatementInput("DO");
+                    this.setColour(20);
+                }
+            };
+            javascript.javascriptGenerator.forBlock['when_run_button_clicked'] = function(block, generator) {
+                return generator.statementToCode(block, 'DO');
+            };
+
+            javascript.javascriptGenerator.forBlock['controls_whileUntil'] = function(block, generator) {
+                const until = block.getFieldValue('MODE') === 'UNTIL';
+                let condition = generator.valueToCode(
+                    block,
+                    'BOOL',
+                    until ? javascript.Order.LOGICAL_NOT : javascript.Order.NONE
+                ) || 'false';
+                if (until) condition = `!${condition}`;
+                let branch = generator.statementToCode(block, 'DO');
+                branch = generator.addLoopTrap(branch, block);
+                return `while ((${condition}) && gurumi.isExecutionActive(runId)) {\n` +
+                    `  await gurumi.yieldToSimulation();\n` +
+                    `  if (!gurumi.isExecutionActive(runId)) break;\n` +
+                    `${branch}}\n`;
+            };
+
+            javascript.javascriptGenerator.forBlock['controls_repeat_ext'] = function(block, generator) {
+                const repeats = block.getField('TIMES')
+                    ? String(Number(block.getFieldValue('TIMES')))
+                    : generator.valueToCode(block, 'TIMES', javascript.Order.ASSIGNMENT) || '0';
+                let branch = generator.statementToCode(block, 'DO');
+                branch = generator.addLoopTrap(branch, block);
+                const loopVariable = generator.nameDB_.getDistinctName(
+                    'count',
+                    Blockly.Names.NameType.VARIABLE
+                );
+                const repeatEndVariable = generator.nameDB_.getDistinctName(
+                    'repeat_end',
+                    Blockly.Names.NameType.VARIABLE
+                );
+                return `var ${repeatEndVariable} = ${repeats};\n` +
+                    `for (var ${loopVariable} = 0; ${loopVariable} < ${repeatEndVariable} && ` +
+                    `gurumi.isExecutionActive(runId); ${loopVariable}++) {\n` +
+                    `  await gurumi.yieldToSimulation();\n` +
+                    `  if (!gurumi.isExecutionActive(runId)) break;\n` +
+                    `${branch}}\n`;
+            };
+
+            Blockly.Blocks['set_left_wheel'] = {
+                init: function() {
+                    this.appendValueInput("SPEED").setCheck("Number").appendField("왼쪽 바퀴 속도를");
+                    this.appendDummyInput().appendField("(으)로 정하기");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(230);
+                }
+            };
+            javascript.javascriptGenerator.forBlock['set_left_wheel'] = function(block, generator) {
+                var value = generator.valueToCode(block, 'SPEED', javascript.Order.ATOMIC) || '0';
+                return `if (gurumi.isExecutionActive(runId)) gurumi.setLeftWheel(${value});\n`;
+            };
+
+            Blockly.Blocks['set_right_wheel'] = {
+                init: function() {
+                    this.appendValueInput("SPEED").setCheck("Number").appendField("오른쪽 바퀴 속도를");
+                    this.appendDummyInput().appendField("(으)로 정하기");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(230);
+                }
+            };
+            javascript.javascriptGenerator.forBlock['set_right_wheel'] = function(block, generator) {
+                var value = generator.valueToCode(block, 'SPEED', javascript.Order.ATOMIC) || '0';
+                return `if (gurumi.isExecutionActive(runId)) gurumi.setRightWheel(${value});\n`;
+            };
+
+            // Blockly 워크스페이스 주입
+            var workspace = Blockly.inject('blockly-container', {
+                toolbox: document.getElementById('toolbox'),
+                scrollbars: true,
+                zoom: { controls: true, wheel: true }
+            });
+
+            // 블록 실행 제어 함수
+            function startBlockCode() {
+                const runId = ++window.gurumi.executionId;
+                window.gurumi.isBlockControlled = true;
+                try {
+                    const eventBlocks = workspace.getTopBlocks(true)
+                        .filter(block => block.type === 'when_run_button_clicked');
+                    const generator = javascript.javascriptGenerator;
+                    generator.init(workspace);
+                    const blockCode = eventBlocks
+                        .map(block => generator.blockToCode(block))
+                        .join('\n');
+                    const code = generator.finish(blockCode);
+                    const execute = new Function(
+                        'gurumi',
+                        'runId',
+                        `return (async function() {\n${code}\n})();`
+                    );
+                    execute(window.gurumi, runId).catch(error => {
+                        console.error('블록 코드 실행 중 오류:', error);
+                        if (window.gurumi.executionId === runId) stopBlockCode();
+                    });
+                } catch (error) {
+                    console.error('블록 코드 생성 중 오류:', error);
+                    if (window.gurumi.executionId === runId) stopBlockCode();
+                }
+            }
+
+            function stopBlockCode() {
+                window.gurumi.executionId++;
+                window.gurumi.isBlockControlled = false;
+                window.gurumi.setLeftWheel(0);
+                window.gurumi.setRightWheel(0);
+            }
+        </script>
+
+        <!-- Three.js & Cannon.es 메인 시뮬레이션 스크립트 -->
+        <script type="module" src="./simulation.js"></script>
+        <script src="./blockly-layout.js"></script>
+    </body>
+</html>
