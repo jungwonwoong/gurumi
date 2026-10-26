@@ -1,0 +1,8 @@
+{
+    "liveServer.settings.https": {
+    "enable": true,
+    "cert": "C:\\Users\\wjddn\\Desktop\\gurumi\\cert\\localhost+3.pem",
+    "key": "C:\\Users\\wjddn\\Desktop\\gurumi\\cert\\localhost+3-key.pem"
+    },
+    "liveServer.settings.port": 5501
+}
