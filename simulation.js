@@ -15,6 +15,7 @@ import * as THREE from 'three'
 
             const displaySettings = {
                 showPhysicsShapes: false,
+                showCameraHelper: false,
                 hideBody00: false,
                 hideBody01: false,
                 hideEle: false,
@@ -283,9 +284,10 @@ import * as THREE from 'three'
             const cameraPreviewCanvas = document.getElementById('camera-preview-canvas')
             const cameraPreviewContext = cameraPreviewCanvas.getContext('2d')
             const onboardCamera = new THREE.PerspectiveCamera(70, 16 / 9, 0.01, 100)
-            onboardCamera.position.set(0, 0.724, -0.56)
+            onboardCamera.position.set(0, 0.737, -0.54)
             carBodyMesh.add(onboardCamera)
             const onboardCameraHelper = new THREE.CameraHelper(onboardCamera)
+            onboardCameraHelper.visible = displaySettings.showCameraHelper
             scene.add(onboardCameraHelper)
             const carMotorMesh = new THREE.Group()
             carBodyMesh.add(carMotorMesh)
@@ -389,14 +391,14 @@ import * as THREE from 'three'
                         console.error('Car model has invalid dimensions and cannot be scaled.')
                         return
                     }
-                    const scale = Math.min(1 / size.x, 1 / size.y/3.87, 2 / size.z)
+                    const scale = Math.min(1 / size.x, 1 / size.y/4.95, 2 / size.z)
 
                     model.scale.setScalar(scale)
                     model.position.set(0, -0.287, 0)
                     const body01Material = new THREE.MeshStandardMaterial({
-                        color: 0xff0000,
+                        color: 0x000000,
                         metalness: 0,
-                        roughness: 0.35
+                        roughness: 0.75
                     })
                     model.traverse((child) => {
                         if (child instanceof THREE.Mesh) {
@@ -1118,7 +1120,7 @@ import * as THREE from 'three'
                         metalness: 0,
                         roughness: 0.35
                     })
-
+                    
                     model.traverse((child) => {
                         if (child instanceof THREE.Mesh) {
                             child.geometry.deleteAttribute('color')
@@ -1127,15 +1129,136 @@ import * as THREE from 'three'
                             }
                             child.material = whitePlastic
                             child.castShadow = false
-                            child.receiveShadow = false
+                            child.receiveShadow = true
                         }
                     })
-
+                    
                     wheelRBMesh.add(model)
                 },
                 undefined,
                 (error) => {
                     console.error('Failed to load car model ./mesh/gurumi_body_00.glb', error)
+                }
+            )
+            carModelLoader.load(
+                './mesh/gurumi_gear_1.glb',
+                (gltf) => {
+                    const model = gltf.scene
+                    const bounds = new THREE.Box3().setFromObject(model)
+                    const size = bounds.getSize(new THREE.Vector3())
+                    const center = bounds.getCenter(new THREE.Vector3())
+                    if (size.x === 0 || size.y === 0 || size.z === 0) {
+                        console.error('Car model has invalid dimensions and cannot be scaled.')
+                        return
+                    }
+                    const scale = Math.min(1 / size.x, 1 / size.y/3.5, 2 / size.z)
+
+                    model.scale.setScalar(scale)
+                    model.position.set(-0.5, -0.155, -1.8)
+
+                    const whitePlastic = new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        metalness: 0,
+                        roughness: 0.35
+                    })
+                    
+                    model.traverse((child) => {
+                        if (child instanceof THREE.Mesh) {
+                            child.geometry.deleteAttribute('color')
+                            if (!child.geometry.attributes.normal) {
+                                child.geometry.computeVertexNormals()
+                            }
+                            child.material = whitePlastic
+                            child.castShadow = false
+                            child.receiveShadow = true
+                        }
+                    })
+                    
+                    wheelLFMesh.add(model)
+                },
+                undefined,
+                (error) => {
+                    console.error('Failed to load car model ./mesh/gurumi_body_00.glb', error)
+                }
+            )
+            carModelLoader.load(
+                './mesh/gurumi_gear_2.glb',
+                (gltf) => {
+                    const model = gltf.scene
+                    const bounds = new THREE.Box3().setFromObject(model)
+                    const size = bounds.getSize(new THREE.Vector3())
+                    const center = bounds.getCenter(new THREE.Vector3())
+                    if (size.x === 0 || size.y === 0 || size.z === 0) {
+                        console.error('Car model has invalid dimensions and cannot be scaled.')
+                        return
+                    }
+                    const scale = Math.min(1 / size.x, 1 / size.y/3.5, 2 / size.z)
+
+                    model.scale.setScalar(scale)
+                    model.position.copy(center).multiplyScalar(-scale)
+                    const whitePlastic = new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        metalness: 0,
+                        roughness: 0.35
+                    })
+                    
+                    model.traverse((child) => {
+                        if (child instanceof THREE.Mesh) {
+                            child.geometry.deleteAttribute('color')
+                            if (!child.geometry.attributes.normal) {
+                                child.geometry.computeVertexNormals()
+                            }
+                            child.material = whitePlastic
+                            child.castShadow = true
+                            child.receiveShadow = true
+                        }
+                    })
+                    
+                    wheelUFMesh.add(model)
+                },
+                undefined,
+                (error) => {
+                    console.error('Failed to load car model ./mesh/gurumi_gear_2.glb', error)
+                }
+            )
+            carModelLoader.load(
+                './mesh/gurumi_gear_2.glb',
+                (gltf) => {
+                    const model = gltf.scene
+                    const bounds = new THREE.Box3().setFromObject(model)
+                    const size = bounds.getSize(new THREE.Vector3())
+                    const center = bounds.getCenter(new THREE.Vector3())
+                    if (size.x === 0 || size.y === 0 || size.z === 0) {
+                        console.error('Car model has invalid dimensions and cannot be scaled.')
+                        return
+                    }
+                    const scale = Math.min(1 / size.x, 1 / size.y/3.5, 2 / size.z)
+
+                    model.scale.setScalar(scale)
+                    model.position.copy(center).multiplyScalar(-scale)
+                    const whitePlastic = new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        metalness: 0,
+                        roughness: 0.35
+                    })
+                    
+                    model.traverse((child) => {
+                        if (child instanceof THREE.Mesh) {
+                            child.geometry.deleteAttribute('color')
+                            if (!child.geometry.attributes.normal) {
+                                child.geometry.computeVertexNormals()
+                            }
+                            child.material = whitePlastic
+                            child.castShadow = true
+                            child.receiveShadow = true
+                        }
+                    })
+                    
+                    wheelUBMesh.add(model)
+                },
+                undefined,
+                (error) => {
+                    console.error('Failed to load car model ./mesh/gurumi_gear_2.glb', error)
                 }
             )
 
@@ -1245,7 +1368,7 @@ import * as THREE from 'three'
             const supportsTouch = window.matchMedia('(pointer: coarse)').matches
             if (supportsTouch) joystick.classList.add('visible')
             joystick.addEventListener('pointerdown', (event) => {
-                if (event.button !== 0 || placingObstacle || deletingObstacles) return
+                if (event.button !== 0 || placingObstacle) return
                 event.preventDefault()
                 joystickSettings.pointerId = event.pointerId
                 joystick.setPointerCapture(event.pointerId)
@@ -1260,7 +1383,7 @@ import * as THREE from 'three'
             const releaseJoystick = (event) => {
                 if (event.pointerId !== joystickSettings.pointerId) return
                 resetJoystick()
-                controls.enabled = !deletingObstacles && !placingObstacle
+                controls.enabled = !placingObstacle
             }
             joystick.addEventListener('pointerup', releaseJoystick)
             joystick.addEventListener('pointercancel', releaseJoystick)
@@ -1351,11 +1474,94 @@ import * as THREE from 'three'
             const debugBodyVisibility = new Map(
                 cannonDebugRenderer.bodies.map(({ body, mesh }) => [body, mesh.visible])
             )
+            for (const { body, mesh } of cannonDebugRenderer.bodies) {
+                mesh.visible = displaySettings.showPhysicsShapes && debugBodyVisibility.get(body)
+            }
             const obstacleRaycaster = new THREE.Raycaster()
             const obstaclePointer = new THREE.Vector2()
             const placedObstacles = []
+            let selectedObstacleShape = 'box'
+            const obstacleShapeButtons = [...document.querySelectorAll('.obstacle-template')]
+            const obstacleSizeGroups = [...document.querySelectorAll('.obstacle-size-group')]
+            const obstacleSizeInputs = {
+                box: {
+                    x: document.getElementById('obstacle-size-x'),
+                    y: document.getElementById('obstacle-size-y'),
+                    z: document.getElementById('obstacle-size-z')
+                },
+                sphere: {
+                    radius: document.getElementById('obstacle-size-sphere-radius')
+                },
+                cylinder: {
+                    radius: document.getElementById('obstacle-size-cylinder-radius'),
+                    height: document.getElementById('obstacle-size-cylinder-height')
+                }
+            }
+            const obstacleSizeOutputs = {
+                box: {
+                    x: document.getElementById('obstacle-size-x-value'),
+                    y: document.getElementById('obstacle-size-y-value'),
+                    z: document.getElementById('obstacle-size-z-value')
+                },
+                sphere: {
+                    radius: document.getElementById('obstacle-size-sphere-radius-value')
+                },
+                cylinder: {
+                    radius: document.getElementById('obstacle-size-cylinder-radius-value'),
+                    height: document.getElementById('obstacle-size-cylinder-height-value')
+                }
+            }
+
+            function getObstacleDimensions(shape = selectedObstacleShape) {
+                const inputs = obstacleSizeInputs[shape]
+                if (shape === 'box') {
+                    return {
+                        x: Number(inputs.x.value),
+                        y: Number(inputs.y.value),
+                        z: Number(inputs.z.value)
+                    }
+                }
+                if (shape === 'sphere') return { radius: Number(inputs.radius.value) }
+                return {
+                    radius: Number(inputs.radius.value),
+                    height: Number(inputs.height.value)
+                }
+            }
+
+            function createObstacleGeometry(shape, dimensions) {
+                if (shape === 'sphere') {
+                    return new THREE.SphereGeometry(dimensions.radius, 24, 16)
+                }
+                if (shape === 'cylinder') {
+                    return new THREE.CylinderGeometry(
+                        dimensions.radius,
+                        dimensions.radius,
+                        dimensions.height,
+                        24
+                    )
+                }
+                return new THREE.BoxGeometry(dimensions.x, dimensions.y, dimensions.z)
+            }
+
+            function createObstaclePhysicsShape(shape, dimensions) {
+                if (shape === 'sphere') return new CANNON.Sphere(dimensions.radius)
+                if (shape === 'cylinder') {
+                    return new CANNON.Cylinder(
+                        dimensions.radius,
+                        dimensions.radius,
+                        dimensions.height,
+                        24
+                    )
+                }
+                return new CANNON.Box(new CANNON.Vec3(
+                    dimensions.x / 2,
+                    dimensions.y / 2,
+                    dimensions.z / 2
+                ))
+            }
+
             const obstaclePreview = new THREE.Mesh(
-                new THREE.BoxGeometry(obstacleSize.x, obstacleSize.y, obstacleSize.z),
+                createObstacleGeometry('box', { x: obstacleSize.x, y: obstacleSize.y, z: obstacleSize.z }),
                 new THREE.MeshPhongMaterial({
                     color: 0xf39c12,
                     transparent: true,
@@ -1366,276 +1572,199 @@ import * as THREE from 'three'
             obstaclePreview.castShadow = true
             obstaclePreview.visible = false
             scene.add(obstaclePreview)
-            const obstacleTemplate = document.getElementById('obstacle-template')
-            const obstacleMeshPreview = document.getElementById('obstacle-mesh-preview')
-            const obstacleMeshPreviewContext = obstacleMeshPreview.getContext('2d')
-            const obstacleSizeInputs = {
-                x: document.getElementById('obstacle-size-x'),
-                y: document.getElementById('obstacle-size-y'),
-                z: document.getElementById('obstacle-size-z')
-            }
-            const obstacleSizeOutputs = {
-                x: document.getElementById('obstacle-size-x-value'),
-                y: document.getElementById('obstacle-size-y-value'),
-                z: document.getElementById('obstacle-size-z-value')
-            }
-
-            function drawObstacleMeshPreview() {
-                const context = obstacleMeshPreviewContext
-                const width = obstacleMeshPreview.width
-                const height = obstacleMeshPreview.height
-                const { x, y, z } = obstacleSize
-                const unitScale = Math.min(
-                    width * 0.46 / (x + z),
-                    height * 0.68 / (y + (x + z) * 0.35)
-                )
-                const xWidth = x * unitScale * 0.8
-                const xDepth = x * unitScale * 0.35
-                const zWidth = z * unitScale * 0.8
-                const zDepth = z * unitScale * 0.35
-                const blockHeight = y * unitScale
-                const centerX = width / 2
-                const bottomY = height * 0.84
-                const origin = { x: centerX - xWidth / 2 + zWidth / 2, y: bottomY - (xDepth + zDepth) / 2 }
-                const xCorner = { x: origin.x + xWidth, y: origin.y + xDepth }
-                const zCorner = { x: origin.x - zWidth, y: origin.y + zDepth }
-                const farCorner = { x: xCorner.x - zWidth, y: xCorner.y + zDepth }
-                const topOrigin = { x: origin.x, y: origin.y - blockHeight }
-                const topXCorner = { x: xCorner.x, y: xCorner.y - blockHeight }
-                const topZCorner = { x: zCorner.x, y: zCorner.y - blockHeight }
-                const topFarCorner = { x: farCorner.x, y: farCorner.y - blockHeight }
-
-                context.clearRect(0, 0, width, height)
-                context.lineWidth = 1.5
-                context.strokeStyle = '#ffd28a'
-
-                context.beginPath()
-                context.moveTo(origin.x, origin.y)
-                context.lineTo(zCorner.x, zCorner.y)
-                context.lineTo(topZCorner.x, topZCorner.y)
-                context.lineTo(topFarCorner.x, topFarCorner.y)
-                context.lineTo(topXCorner.x, topXCorner.y)
-                context.lineTo(xCorner.x, xCorner.y)
-                context.closePath()
-                context.fillStyle = '#bd690b'
-                context.fill()
-                context.stroke()
-
-                context.beginPath()
-                context.moveTo(origin.x, origin.y)
-                context.lineTo(xCorner.x, xCorner.y)
-                context.lineTo(topXCorner.x, topXCorner.y)
-                context.lineTo(topOrigin.x, topOrigin.y)
-                context.closePath()
-                context.fillStyle = '#d98216'
-                context.fill()
-                context.stroke()
-
-                context.beginPath()
-                context.moveTo(origin.x, origin.y)
-                context.lineTo(zCorner.x, zCorner.y)
-                context.lineTo(topZCorner.x, topZCorner.y)
-                context.lineTo(topOrigin.x, topOrigin.y)
-                context.closePath()
-                context.fillStyle = '#f39c12'
-                context.fill()
-                context.stroke()
-
-                context.beginPath()
-                context.moveTo(topOrigin.x, topOrigin.y)
-                context.lineTo(topZCorner.x, topZCorner.y)
-                context.lineTo(topFarCorner.x, topFarCorner.y)
-                context.lineTo(topXCorner.x, topXCorner.y)
-                context.closePath()
-                context.fillStyle = '#ffc45c'
-                context.fill()
-                context.stroke()
-            }
 
             function updateObstacleSize() {
                 const maxSize = stairHeight * 5
-                obstacleSizeInputs.x.max = String(maxSize)
-                obstacleSizeInputs.y.max = String(maxSize)
-                obstacleSizeInputs.z.max = String(maxSize)
-                obstacleSize.set(
-                    Number(obstacleSizeInputs.x.value),
-                    Number(obstacleSizeInputs.y.value),
-                    Number(obstacleSizeInputs.z.value)
-                )
-                obstacleSizeOutputs.x.value = obstacleSize.x.toFixed(2)
-                obstacleSizeOutputs.y.value = obstacleSize.y.toFixed(2)
-                obstacleSizeOutputs.z.value = obstacleSize.z.toFixed(2)
+                for (const shapeInputs of Object.values(obstacleSizeInputs)) {
+                    for (const input of Object.values(shapeInputs)) {
+                        input.max = String(maxSize)
+                    }
+                }
+                const inputs = obstacleSizeInputs[selectedObstacleShape]
+                const outputs = obstacleSizeOutputs[selectedObstacleShape]
+                for (const [key, input] of Object.entries(inputs)) {
+                    input.max = String(maxSize)
+                    outputs[key].value = Number(input.value).toFixed(2)
+                }
+                if (selectedObstacleShape === 'box') {
+                    obstacleSize.set(
+                        Number(inputs.x.value),
+                        Number(inputs.y.value),
+                        Number(inputs.z.value)
+                    )
+                }
                 obstaclePreview.geometry.dispose()
-                obstaclePreview.geometry = new THREE.BoxGeometry(
-                    obstacleSize.x,
-                    obstacleSize.y,
-                    obstacleSize.z
+                obstaclePreview.geometry = createObstacleGeometry(
+                    selectedObstacleShape,
+                    getObstacleDimensions()
                 )
-                drawObstacleMeshPreview()
             }
 
-            for (const input of Object.values(obstacleSizeInputs)) {
-                input.addEventListener('input', updateObstacleSize)
+            for (const shapeInputs of Object.values(obstacleSizeInputs)) {
+                for (const input of Object.values(shapeInputs)) {
+                    input.addEventListener('input', updateObstacleSize)
+                }
             }
-            updateObstacleSize()
+            for (const button of obstacleShapeButtons) {
+                button.addEventListener('click', () => {
+                    selectObstacleShape(button.dataset.shape)
+                })
+            }
+            function selectObstacleShape(shape) {
+                selectedObstacleShape = shape
+                for (const group of obstacleSizeGroups) {
+                    group.hidden = group.dataset.shape !== selectedObstacleShape
+                }
+                for (const button of obstacleShapeButtons) {
+                    button.setAttribute('aria-pressed', String(button.dataset.shape === shape))
+                }
+                updateObstacleSize()
+            }
+            selectObstacleShape(selectedObstacleShape)
             let placingObstacle = false
             let obstaclePlacementValid = false
-            let deletingObstacles = false
-            let obstacleDragBaseY = null
-            let obstacleDragPlaneY = null
+            let obstaclePointerId = null
             let obstacleRotationY = 0
+            let lastContinuousPlacement = null
             const obstacleSurfaceNormalMatrix = new THREE.Matrix3()
             const placementTolerance = 1e-4
 
-            function getObstacleBounds(x, y, z) {
-                const cosine = Math.abs(Math.cos(obstacleRotationY))
-                const sine = Math.abs(Math.sin(obstacleRotationY))
-                const halfX = (cosine * obstacleSize.x + sine * obstacleSize.z) / 2
-                const halfZ = (sine * obstacleSize.x + cosine * obstacleSize.z) / 2
+            function getObstacleBounds(x, y, z, shape = selectedObstacleShape) {
+                const dimensions = getObstacleDimensions(shape)
+                let halfX
+                let halfY
+                let halfZ
+                if (shape === 'sphere') {
+                    halfX = halfY = halfZ = dimensions.radius
+                } else if (shape === 'cylinder') {
+                    halfX = halfZ = dimensions.radius
+                    halfY = dimensions.height / 2
+                } else {
+                    const cosine = Math.abs(Math.cos(obstacleRotationY))
+                    const sine = Math.abs(Math.sin(obstacleRotationY))
+                    halfX = (cosine * dimensions.x + sine * dimensions.z) / 2
+                    halfY = dimensions.y / 2
+                    halfZ = (sine * dimensions.x + cosine * dimensions.z) / 2
+                }
                 return new THREE.Box3(
-                    new THREE.Vector3(x - halfX, y - obstacleSize.y / 2, z - halfZ),
-                    new THREE.Vector3(x + halfX, y + obstacleSize.y / 2, z + halfZ)
+                    new THREE.Vector3(x - halfX, y - halfY, z - halfZ),
+                    new THREE.Vector3(x + halfX, y + halfY, z + halfZ)
                 )
+            }
+
+            function getObstacleSupportOffset(normal) {
+                const dimensions = getObstacleDimensions()
+                if (selectedObstacleShape === 'sphere') return dimensions.radius
+                if (selectedObstacleShape === 'cylinder') {
+                    return Math.abs(normal.y) * dimensions.height / 2
+                        + Math.hypot(normal.x, normal.z) * dimensions.radius
+                }
+                const cosine = Math.cos(obstacleRotationY)
+                const sine = Math.sin(obstacleRotationY)
+                return Math.abs(normal.x * cosine - normal.z * sine) * dimensions.x / 2
+                    + Math.abs(normal.y) * dimensions.y / 2
+                    + Math.abs(normal.x * sine + normal.z * cosine) * dimensions.z / 2
             }
 
             function updateObstaclePreview(event) {
                 const rendererBounds = renderer.domElement.getBoundingClientRect()
+                const pointerTarget = document.elementFromPoint(event.clientX, event.clientY)
+                if (!renderer.domElement.contains(pointerTarget)) {
+                    obstaclePreview.visible = false
+                    obstaclePlacementValid = false
+                    return false
+                }
                 obstaclePointer.set(
                     ((event.clientX - rendererBounds.left) / rendererBounds.width) * 2 - 1,
                     -((event.clientY - rendererBounds.top) / rendererBounds.height) * 2 + 1
                 )
                 obstacleRaycaster.setFromCamera(obstaclePointer, camera)
-                let point
-                if (obstacleDragBaseY === null) {
-                    const intersections = obstacleRaycaster.intersectObjects(obstaclePlacementSurfaces)
-                    const topIntersection = intersections.find((intersection) => {
+                const collisionBounds = obstacleCollisionMeshes.map((mesh) => ({
+                    mesh,
+                    bounds: new THREE.Box3().setFromObject(mesh)
+                }))
+                const surfaceHit = obstacleRaycaster
+                    .intersectObjects(obstaclePlacementSurfaces)
+                    .find((intersection) => {
                         if (!intersection.face) return false
                         obstacleSurfaceNormalMatrix.getNormalMatrix(intersection.object.matrixWorld)
                         const normal = intersection.face.normal
                             .clone()
                             .applyMatrix3(obstacleSurfaceNormalMatrix)
                             .normalize()
-                        return normal.y > 0.9
+                        return selectedObstacleShape === 'sphere'
+                            || normal.y > 0.9
+                            || Math.abs(normal.y) < 0.1
                     })
-                    if (!topIntersection) {
-                        obstaclePreview.visible = false
-                        obstaclePlacementValid = false
-                        return false
-                    }
-                    obstacleDragBaseY = topIntersection.point.y
-                    obstacleDragPlaneY = topIntersection.point.y
-                    point = topIntersection.point
-                } else {
-                    const dragPlane = new THREE.Plane(
-                        new THREE.Vector3(0, 1, 0),
-                        -obstacleDragPlaneY
-                    )
-                    point = obstacleRaycaster.ray.intersectPlane(dragPlane, new THREE.Vector3())
-                    if (!point) {
-                        obstaclePreview.visible = false
-                        obstaclePlacementValid = false
-                        return false
-                    }
+                if (!surfaceHit) {
+                    obstaclePreview.visible = false
+                    obstaclePlacementValid = false
+                    return false
                 }
 
-                let centerY = obstacleDragBaseY + obstacleSize.y / 2
-                const collisionBounds = obstacleCollisionMeshes
-                    .map((mesh) => new THREE.Box3().setFromObject(mesh))
-                while (obstacleDragBaseY > placementTolerance) {
-                    const currentBounds = getObstacleBounds(point.x, centerY, point.z)
-                    const hasSupportBelow = collisionBounds.some((bounds) => (
-                        Math.abs(bounds.max.y - obstacleDragBaseY) <= placementTolerance
-                        && Math.min(currentBounds.max.x, bounds.max.x)
-                            - Math.max(currentBounds.min.x, bounds.min.x) > placementTolerance
-                        && Math.min(currentBounds.max.z, bounds.max.z)
-                            - Math.max(currentBounds.min.z, bounds.min.z) > placementTolerance
-                    ))
-                    if (hasSupportBelow) break
+                obstacleSurfaceNormalMatrix.getNormalMatrix(surfaceHit.object.matrixWorld)
+                const normal = surfaceHit.face.normal
+                    .clone()
+                    .applyMatrix3(obstacleSurfaceNormalMatrix)
+                    .normalize()
+                const point = surfaceHit.point
+                const center = point.clone().addScaledVector(
+                    normal,
+                    getObstacleSupportOffset(normal)
+                )
 
-                    const lowerY = Math.max(0, obstacleDragBaseY - obstacleSize.y)
-                    const lowerBounds = getObstacleBounds(point.x, lowerY + obstacleSize.y / 2, point.z)
-                    const lowerSupport = collisionBounds
-                        .filter((bounds) => (
-                            bounds.max.y < obstacleDragBaseY - placementTolerance
-                            && bounds.max.y >= lowerY - placementTolerance
-                            && Math.min(lowerBounds.max.x, bounds.max.x)
-                                - Math.max(lowerBounds.min.x, bounds.min.x) > placementTolerance
-                            && Math.min(lowerBounds.max.z, bounds.max.z)
-                                - Math.max(lowerBounds.min.z, bounds.min.z) > placementTolerance
-                        ))
-                        .sort((a, b) => b.max.y - a.max.y)[0]
-                    obstacleDragBaseY = lowerSupport ? lowerSupport.max.y : lowerY
-                    centerY = obstacleDragBaseY + obstacleSize.y / 2
-                }
-
-                let steppedUp = true
-                while (steppedUp) {
-                    steppedUp = false
-                    const candidateBounds = getObstacleBounds(point.x, centerY, point.z)
-                    const supportingTop = collisionBounds
-                        .filter((bounds) => (
-                            Math.min(candidateBounds.max.x, bounds.max.x)
-                            - Math.max(candidateBounds.min.x, bounds.min.x)
-                        ) > placementTolerance && (
-                            Math.min(candidateBounds.max.z, bounds.max.z)
-                            - Math.max(candidateBounds.min.z, bounds.min.z)
-                        ) > placementTolerance && (
-                            Math.min(candidateBounds.max.y, bounds.max.y)
-                            - Math.max(candidateBounds.min.y, bounds.min.y)
-                        ) > placementTolerance
-                    )
-                        .sort((a, b) => a.max.y - b.max.y)[0]
-                    if (supportingTop) {
-                        centerY = supportingTop.max.y + obstacleSize.y / 2
-                        obstacleDragBaseY = supportingTop.max.y
-                        steppedUp = true
-                    }
-                }
-
-                obstaclePreview.position.set(point.x, centerY, point.z)
+                obstaclePreview.position.copy(center)
                 obstaclePreview.rotation.y = obstacleRotationY
                 obstaclePreview.visible = true
-                const previewBounds = getObstacleBounds(point.x, centerY, point.z)
-                const overlapsObstacle = collisionBounds.some((bounds) => (
-                    Math.min(previewBounds.max.x, bounds.max.x)
-                    - Math.max(previewBounds.min.x, bounds.min.x)
-                ) > placementTolerance && (
-                    Math.min(previewBounds.max.y, bounds.max.y)
-                    - Math.max(previewBounds.min.y, bounds.min.y)
-                ) > placementTolerance && (
-                    Math.min(previewBounds.max.z, bounds.max.z)
-                    - Math.max(previewBounds.min.z, bounds.min.z)
-                ) > placementTolerance)
-                const hasSupport = obstacleDragBaseY <= placementTolerance
-                    || collisionBounds.some((bounds) => (
-                        Math.abs(bounds.max.y - obstacleDragBaseY) <= placementTolerance
-                        && Math.min(previewBounds.max.x, bounds.max.x)
-                            - Math.max(previewBounds.min.x, bounds.min.x) > placementTolerance
-                        && Math.min(previewBounds.max.z, bounds.max.z)
-                            - Math.max(previewBounds.min.z, bounds.min.z) > placementTolerance
-                    ))
+                const previewBounds = getObstacleBounds(center.x, center.y, center.z)
+                const support = collisionBounds.find(({ mesh }) => mesh === surfaceHit.object)
+                const overlapsObstacle = collisionBounds.some(({ mesh, bounds }) => (
+                    mesh !== surfaceHit.object
+                    && Math.min(previewBounds.max.x, bounds.max.x)
+                        - Math.max(previewBounds.min.x, bounds.min.x) > placementTolerance
+                    && Math.min(previewBounds.max.y, bounds.max.y)
+                        - Math.max(previewBounds.min.y, bounds.min.y) > placementTolerance
+                    && Math.min(previewBounds.max.z, bounds.max.z)
+                        - Math.max(previewBounds.min.z, bounds.min.z) > placementTolerance
+                ))
+                const groundSupport = surfaceHit.object === groundMesh
+                    && Math.abs(point.y) <= placementTolerance
+                const hasSupport = groundSupport || Boolean(support)
                 obstaclePlacementValid = hasSupport && !overlapsObstacle
                 obstaclePreview.material.color.setHex(obstaclePlacementValid ? 0xf39c12 : 0xff3333)
                 return obstaclePlacementValid
             }
 
-            const obstacleDeleteToggle = document.getElementById('obstacle-delete-toggle')
-            obstacleDeleteToggle.addEventListener('click', () => {
-                deletingObstacles = !deletingObstacles
-                obstacleDeleteToggle.setAttribute('aria-pressed', String(deletingObstacles))
-                obstacleDeleteToggle.textContent = deletingObstacles
-                    ? '삭제 모드 켜짐 (클릭하여 종료)'
-                    : '설치한 직육면체 지우기'
-                obstacleTemplate.disabled = deletingObstacles
-                for (const input of Object.values(obstacleSizeInputs)) {
-                    input.disabled = deletingObstacles
-                }
-                controls.enabled = !deletingObstacles
-                obstaclePreview.visible = false
-            })
-            renderer.domElement.addEventListener('pointerdown', (event) => {
-                if (!deletingObstacles || event.button !== 0) return
-                event.preventDefault()
+            function placeObstacle() {
+                const dimensions = getObstacleDimensions()
+                const obstacleMesh = new THREE.Mesh(
+                    createObstacleGeometry(selectedObstacleShape, dimensions),
+                    new THREE.MeshPhongMaterial({ color: 0xf39c12 })
+                )
+                obstacleMesh.position.copy(obstaclePreview.position)
+                obstacleMesh.rotation.y = obstacleRotationY
+                obstacleMesh.castShadow = true
+                obstacleMesh.receiveShadow = true
+                scene.add(obstacleMesh)
+                obstaclePlacementSurfaces.push(obstacleMesh)
+                obstacleCollisionMeshes.push(obstacleMesh)
+
+                const obstacleBody = new CANNON.Body({ mass: 0 })
+                obstacleBody.addShape(createObstaclePhysicsShape(selectedObstacleShape, dimensions))
+                obstacleBody.position.set(
+                    obstacleMesh.position.x,
+                    obstacleMesh.position.y,
+                    obstacleMesh.position.z
+                )
+                obstacleBody.quaternion.setFromEuler(0, obstacleRotationY, 0)
+                world.addBody(obstacleBody)
+                placedObstacles.push({ mesh: obstacleMesh, body: obstacleBody })
+                const debugBody = addCannonDebugBody(obstacleBody)
+                debugBodyVisibility.set(obstacleBody, true)
+                debugBody.mesh.visible = displaySettings.showPhysicsShapes
+            }
+
+            function deleteObstacleAtPointer(event) {
                 const rendererBounds = renderer.domElement.getBoundingClientRect()
                 obstaclePointer.set(
                     ((event.clientX - rendererBounds.left) / rendererBounds.width) * 2 - 1,
@@ -1645,7 +1774,7 @@ import * as THREE from 'three'
                 const [intersection] = obstacleRaycaster.intersectObjects(
                     placedObstacles.map(({ mesh }) => mesh)
                 )
-                if (!intersection) return
+                if (!intersection) return false
 
                 const obstacleIndex = placedObstacles.findIndex(({ mesh }) => mesh === intersection.object)
                 const [{ mesh, body }] = placedObstacles.splice(obstacleIndex, 1)
@@ -1657,20 +1786,39 @@ import * as THREE from 'three'
                 obstaclePlacementSurfaces.splice(obstaclePlacementSurfaces.indexOf(mesh), 1)
                 debugBodyVisibility.delete(body)
                 removeCannonDebugBody(body)
-            })
-            obstacleTemplate.addEventListener('pointerdown', (event) => {
-                if (deletingObstacles) return
-                if (event.button !== 0) return
+                return true
+            }
+
+            renderer.domElement.addEventListener('pointerdown', (event) => {
+                if (!event.shiftKey || event.button !== 0) return
                 event.preventDefault()
-                obstacleTemplate.setPointerCapture(event.pointerId)
+                event.stopImmediatePropagation()
+                deleteObstacleAtPointer(event)
+            }, true)
+
+            function beginObstaclePlacement(event) {
                 placingObstacle = true
-                obstacleDragBaseY = null
-                obstacleDragPlaneY = null
+                obstaclePointerId = event.pointerId
                 obstacleRotationY = 0
                 obstaclePreview.rotation.y = obstacleRotationY
-                controls.enabled = false
+                renderer.domElement.setPointerCapture?.(event.pointerId)
                 updateObstaclePreview(event)
-            })
+            }
+
+            // 모양 버튼은 선택만 하고, Ctrl을 누른 상태에서 장면을 드래그해 설치합니다.
+            for (const button of obstacleShapeButtons) {
+                button.addEventListener('click', () => {
+                    selectObstacleShape(button.dataset.shape)
+                })
+            }
+
+            renderer.domElement.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || !event.ctrlKey || event.shiftKey) return
+                event.preventDefault()
+                event.stopImmediatePropagation()
+                beginObstaclePlacement(event)
+            }, true)
+
             renderer.domElement.addEventListener('wheel', (event) => {
                 if (!placingObstacle) return
                 event.preventDefault()
@@ -1681,54 +1829,29 @@ import * as THREE from 'three'
                 obstaclePreview.rotation.y = obstacleRotationY
                 updateObstaclePreview(event)
             }, { passive: false })
+
             window.addEventListener('pointermove', (event) => {
-                if (placingObstacle) updateObstaclePreview(event)
+                if (placingObstacle && event.pointerId === obstaclePointerId) {
+                    updateObstaclePreview(event)
+                }
             })
             window.addEventListener('pointerup', (event) => {
-                if (!placingObstacle) return
-                if (updateObstaclePreview(event)) {
-                    const obstacleMesh = new THREE.Mesh(
-                        new THREE.BoxGeometry(obstacleSize.x, obstacleSize.y, obstacleSize.z),
-                        new THREE.MeshPhongMaterial({ color: 0xf39c12 })
-                    )
-                    obstacleMesh.position.copy(obstaclePreview.position)
-                    obstacleMesh.rotation.y = obstacleRotationY
-                    obstacleMesh.castShadow = true
-                    obstacleMesh.receiveShadow = true
-                    scene.add(obstacleMesh)
-                    obstaclePlacementSurfaces.push(obstacleMesh)
-                    obstacleCollisionMeshes.push(obstacleMesh)
-
-                    const obstacleBody = new CANNON.Body({ mass: 0 })
-                    obstacleBody.addShape(new CANNON.Box(
-                        new CANNON.Vec3(obstacleSize.x / 2, obstacleSize.y / 2, obstacleSize.z / 2)
-                    ))
-                    obstacleBody.position.set(
-                        obstacleMesh.position.x,
-                        obstacleMesh.position.y,
-                        obstacleMesh.position.z
-                    )
-                    obstacleBody.quaternion.setFromEuler(0, obstacleRotationY, 0)
-                    world.addBody(obstacleBody)
-                    placedObstacles.push({ mesh: obstacleMesh, body: obstacleBody })
-                    const debugBody = addCannonDebugBody(obstacleBody)
-                    debugBodyVisibility.set(obstacleBody, true)
-                    debugBody.mesh.visible = displaySettings.showPhysicsShapes
+                if (!placingObstacle || event.pointerId !== obstaclePointerId) return
+                if (updateObstaclePreview(event)) placeObstacle()
+                placingObstacle = false
+                obstaclePlacementValid = false
+                obstaclePointerId = null
+                obstaclePreview.visible = false
+                if (renderer.domElement.hasPointerCapture?.(event.pointerId)) {
+                    renderer.domElement.releasePointerCapture(event.pointerId)
                 }
-                placingObstacle = false
-                obstaclePlacementValid = false
-                obstacleDragBaseY = null
-                obstacleDragPlaneY = null
-                obstaclePreview.visible = false
-                controls.enabled = true
             })
-            window.addEventListener('pointercancel', () => {
+            window.addEventListener('pointercancel', (event) => {
+                if (!placingObstacle || event.pointerId !== obstaclePointerId) return
                 placingObstacle = false
                 obstaclePlacementValid = false
-                obstacleDragBaseY = null
-                obstacleDragPlaneY = null
+                obstaclePointerId = null
                 obstaclePreview.visible = false
-                controls.enabled = true
             })
             optionsFolder
                 .add(displaySettings, 'showPhysicsShapes')
@@ -1737,6 +1860,12 @@ import * as THREE from 'three'
                     for (const { body, mesh } of cannonDebugRenderer.bodies) {
                         mesh.visible = visible && debugBodyVisibility.get(body)
                     }
+                })
+            optionsFolder
+                .add(displaySettings, 'showCameraHelper')
+                .name('카메라 helper 표시')
+                .onChange((visible) => {
+                    onboardCameraHelper.visible = visible
                 })
             optionsFolder
                 .add(displaySettings, 'hideBody01')

@@ -26,29 +26,30 @@
         </div>
         <aside id="obstacle-menu">
             <h2>장애물 추가</h2>
-            <button id="obstacle-template" type="button" aria-label="메쉬를 드래그하여 장애물 배치">
-                <canvas id="obstacle-mesh-preview" width="240" height="82"></canvas>
-                <span>메쉬를 드래그하여 배치</span>
-            </button>
-            <div id="obstacle-size-controls" aria-label="장애물 크기 조절">
-                <label class="obstacle-size-control">
-                    <span>X</span>
-                    <input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 X 크기" />
-                    <output id="obstacle-size-x-value" for="obstacle-size-x">0.60</output>
-                </label>
-                <label class="obstacle-size-control">
-                    <span>Y</span>
-                    <input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="장애물 Y 크기" />
-                    <output id="obstacle-size-y-value" for="obstacle-size-y">0.20</output>
-                </label>
-                <label class="obstacle-size-control">
-                    <span>Z</span>
-                    <input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 Z 크기" />
-                    <output id="obstacle-size-z-value" for="obstacle-size-z">0.60</output>
-                </label>
+            <div id="obstacle-shapes" aria-label="장애물 모양">
+                <button class="obstacle-template" type="button" data-shape="box">직육면체</button>
+                <button class="obstacle-template" type="button" data-shape="sphere">구</button>
+                <button class="obstacle-template" type="button" data-shape="cylinder">실린더</button>
             </div>
-            <button id="obstacle-delete-toggle" type="button" aria-pressed="false">설치한 직육면체 지우기</button>
-            <p>크기는 계단 높이의 5배까지입니다.<br />바닥이나 박스 위에 드래그하세요. 휠로 회전합니다.<br />삭제 모드에서 설치한 박스를 클릭하세요.</p>
+<div id="obstacle-size-controls" aria-label="장애물 크기 조절">
+                <div class="obstacle-size-group" data-shape="box">
+                    <label class="obstacle-size-control"><span>X</span><input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="직육면체 X 크기" /><output id="obstacle-size-x-value">0.60</output></label>
+                    <label class="obstacle-size-control"><span>Y</span><input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="직육면체 Y 크기" /><output id="obstacle-size-y-value">0.20</output></label>
+                    <label class="obstacle-size-control"><span>Z</span><input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="직육면체 Z 크기" /><output id="obstacle-size-z-value">0.60</output></label>
+                </div>
+                <div class="obstacle-size-group" data-shape="sphere" hidden>
+                    <label class="obstacle-size-control"><span>반지름</span><input id="obstacle-size-sphere-radius" type="range" min="0.05" step="0.05" value="0.3" aria-label="구 반지름" /><output id="obstacle-size-sphere-radius-value">0.30</output></label>
+                </div>
+                <div class="obstacle-size-group" data-shape="cylinder" hidden>
+                    <label class="obstacle-size-control"><span>반지름</span><input id="obstacle-size-cylinder-radius" type="range" min="0.05" step="0.05" value="0.3" aria-label="실린더 반지름" /><output id="obstacle-size-cylinder-radius-value">0.30</output></label>
+                    <label class="obstacle-size-control"><span>높이</span><input id="obstacle-size-cylinder-height" type="range" min="0.05" step="0.05" value="0.6" aria-label="실린더 높이" /><output id="obstacle-size-cylinder-height-value">0.60</output></label>
+                </div>
+                <!-- 마찰계수 조절 슬라이더 추가 -->
+                <div id="obstacle-friction-group" aria-label="장애물 마찰계수 조절" style="margin-top: 10px;">
+                    <label class="obstacle-size-control"><span>마찰</span><input id="obstacle-friction" type="range" min="0" max="1" step="0.05" value="0.3" aria-label="마찰계수" /><output id="obstacle-friction-value">0.30</output></label>
+                </div>
+            </div>
+            <p>크기는 계단 높이의 최대 5배까지입니다.<br />장애물 모양 버튼을 클릭해 선택하세요. Ctrl을 누른 상태에서 장면을 마우스로 누르고 드래그한 뒤 놓으면 설치됩니다. Ctrl을 계속 누르고 반복하면 연속 설치할 수 있습니다. Shift를 누른 채 설치한 장애물을 클릭하면 삭제합니다. 휠로 회전할 수 있습니다.</p>
         </aside>
         <div id="mobile-joystick" role="application" aria-label="이동 조이스틱">
             <div id="mobile-joystick-knob"></div>

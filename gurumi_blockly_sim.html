@@ -177,36 +177,6 @@
                 font-size: 16px;
             }
 
-            #obstacle-template {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #f39c12;
-                border-radius: 5px;
-                background: rgba(243, 156, 18, 0.2);
-                color: white;
-                cursor: grab;
-                touch-action: none;
-            }
-
-            #obstacle-template:active {
-                cursor: grabbing;
-            }
-
-            #obstacle-delete-toggle {
-                width: 100%;
-                margin-top: 8px;
-                padding: 9px;
-                border: 1px solid #e74c3c;
-                border-radius: 5px;
-                background: rgba(231, 76, 60, 0.2);
-                color: white;
-                cursor: pointer;
-            }
-
-            #obstacle-delete-toggle[aria-pressed="true"] {
-                background: #c0392b;
-            }
-
             #obstacle-menu p {
                 margin: 9px 0 0;
                 color: rgba(255, 255, 255, 0.75);
@@ -268,29 +238,26 @@
             </div>
             <aside id="obstacle-menu">
                 <h2>장애물 추가</h2>
-                <button id="obstacle-template" type="button" aria-label="메쉬를 드래그하여 장애물 배치">
-                    <canvas id="obstacle-mesh-preview" width="240" height="82"></canvas>
-                    <span>메쉬를 드래그하여 배치</span>
-                </button>
-                <div id="obstacle-size-controls" aria-label="장애물 크기 조절">
-                    <label class="obstacle-size-control">
-                        <span>X</span>
-                        <input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 X 크기" />
-                        <output id="obstacle-size-x-value" for="obstacle-size-x">0.60</output>
-                    </label>
-                    <label class="obstacle-size-control">
-                        <span>Y</span>
-                        <input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="장애물 Y 크기" />
-                        <output id="obstacle-size-y-value" for="obstacle-size-y">0.20</output>
-                    </label>
-                    <label class="obstacle-size-control">
-                        <span>Z</span>
-                        <input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="장애물 Z 크기" />
-                        <output id="obstacle-size-z-value" for="obstacle-size-z">0.60</output>
-                    </label>
+                <div id="obstacle-shapes" aria-label="장애물 모양">
+                    <button class="obstacle-template" type="button" data-shape="box">직육면체</button>
+                    <button class="obstacle-template" type="button" data-shape="sphere">구</button>
+                    <button class="obstacle-template" type="button" data-shape="cylinder">실린더</button>
                 </div>
-                <button id="obstacle-delete-toggle" type="button" aria-pressed="false">설치한 직육면체 지우기</button>
-                <p>크기는 계단 높이의 5배까지입니다.<br />바닥이나 박스 위에 드래그하세요. 휠로 회전합니다.<br />삭제 모드에서 설치한 박스를 클릭하세요.</p>
+                <div id="obstacle-size-controls" aria-label="장애물 크기 조절">
+                    <div class="obstacle-size-group" data-shape="box">
+                        <label class="obstacle-size-control"><span>X</span><input id="obstacle-size-x" type="range" min="0.05" step="0.05" value="0.6" aria-label="직육면체 X 크기" /><output id="obstacle-size-x-value">0.60</output></label>
+                        <label class="obstacle-size-control"><span>Y</span><input id="obstacle-size-y" type="range" min="0.05" step="0.05" value="0.2" aria-label="직육면체 Y 크기" /><output id="obstacle-size-y-value">0.20</output></label>
+                        <label class="obstacle-size-control"><span>Z</span><input id="obstacle-size-z" type="range" min="0.05" step="0.05" value="0.6" aria-label="직육면체 Z 크기" /><output id="obstacle-size-z-value">0.60</output></label>
+                    </div>
+                    <div class="obstacle-size-group" data-shape="sphere" hidden>
+                        <label class="obstacle-size-control"><span>반지름</span><input id="obstacle-size-sphere-radius" type="range" min="0.05" step="0.05" value="0.3" aria-label="구 반지름" /><output id="obstacle-size-sphere-radius-value">0.30</output></label>
+                    </div>
+                    <div class="obstacle-size-group" data-shape="cylinder" hidden>
+                        <label class="obstacle-size-control"><span>반지름</span><input id="obstacle-size-cylinder-radius" type="range" min="0.05" step="0.05" value="0.3" aria-label="실린더 반지름" /><output id="obstacle-size-cylinder-radius-value">0.30</output></label>
+                        <label class="obstacle-size-control"><span>높이</span><input id="obstacle-size-cylinder-height" type="range" min="0.05" step="0.05" value="0.6" aria-label="실린더 높이" /><output id="obstacle-size-cylinder-height-value">0.60</output></label>
+                    </div>
+                </div>
+                <p>크기는 계단 높이의 최대 5배까지입니다.<br />장애물 모양 버튼을 클릭해 선택하세요. Ctrl을 누른 상태에서 장면을 마우스로 누르고 드래그한 뒤 놓으면 설치됩니다. Ctrl을 계속 누르고 반복하면 연속 설치할 수 있습니다. Shift를 누른 채 설치한 장애물을 클릭하면 삭제합니다. 휠로 회전할 수 있습니다.</p>
             </aside>
             <div id="mobile-joystick" role="application" aria-label="이동 조이스틱">
                 <div id="mobile-joystick-knob"></div>
@@ -331,6 +298,10 @@
             <category name="연산" colour="%{BKY_MATH_HUE}">
                 <block type="math_number"><field name="NUM">0</field></block>
                 <block type="logic_boolean"></block>
+                <block type="math_arithmetic"></block>
+                <block type="math_random_int"></block>
+                <block type="math_modulo_div"></block>
+                <block type="math_advanced_single"></block>
             </category>
         </xml>
 
@@ -355,12 +326,152 @@
             Blockly.Blocks['when_run_button_clicked'] = {
                 init: function() {
                     this.appendDummyInput().appendField("블록 실행 버튼을 눌렀을 때");
-                    this.appendStatementInput("DO");
+                    this.setNextStatement(true, null);
                     this.setColour(20);
+                    this.hat = 'cap';
                 }
             };
+            
             javascript.javascriptGenerator.forBlock['when_run_button_clicked'] = function(block, generator) {
-                return generator.statementToCode(block, 'DO');
+                var nextBlock = block.getNextBlock();
+                var code = nextBlock ? generator.blockToCode(nextBlock) : '';
+                return code;
+            };
+
+            // 1. 사칙연산 블록 (~ + - * / ~)
+            Blockly.Blocks['math_arithmetic'] = {
+                init: function() {
+                    this.setColour(230);
+                    this.setOutput(true, 'Number');
+                    this.appendValueInput('A').setCheck('Number');
+                    this.appendDummyInput().appendField(new Blockly.FieldDropdown([
+                        ['+', 'ADD'],
+                        ['-', 'MINUS'],
+                        ['*', 'MULTIPLY'],
+                        ['/', 'DIVIDE']
+                    ]), 'OP');
+                    this.appendValueInput('B').setCheck('Number');
+                    this.setInputsInline(true);
+                    this.setTooltip('사칙연산 블록');
+                }
+            };
+            javascript.javascriptGenerator.forBlock['math_arithmetic'] = function(block, generator) {
+                const operator = block.getFieldValue('OP');
+                const order = operator === 'MULTIPLY' || operator === 'DIVIDE' ?
+                    javascript.Order.MULTIPLICATION : javascript.Order.ADDITION;
+                const argument0 = generator.valueToCode(block, 'A', order) || '0';
+                const argument1 = generator.valueToCode(block, 'B', order) || '0';
+                let code;
+                switch (operator) {
+                    case 'ADD': code = `${argument0} + ${argument1}`; break;
+                    case 'MINUS': code = `${argument0} - ${argument1}`; break;
+                    case 'MULTIPLY': code = `${argument0} * ${argument1}`; break;
+                    case 'DIVIDE': code = `${argument0} / ${argument1}`; break;
+                    default: return ['', javascript.Order.NONE];
+                }
+                return [code, order];
+            };
+
+            // 2. ~부터 ~사이의 무작위 수 블록
+            Blockly.Blocks['math_random_int'] = {
+                init: function() {
+                    this.appendValueInput('FROM').setCheck('Number');
+                    this.appendDummyInput().appendField('부터');
+                    this.appendValueInput('TO').setCheck('Number');
+                    this.appendDummyInput().appendField('사이의 무작위 수');
+                    this.setInputsInline(true);
+                    this.setOutput(true, 'Number');
+                    this.setColour(230);
+                    this.setTooltip('지정한 범위 안의 무작위 정수를 반환합니다.');
+                }
+            };
+            javascript.javascriptGenerator.forBlock['math_random_int'] = function(block, generator) {
+                const argument0 = generator.valueToCode(block, 'FROM', javascript.Order.NONE) || '0';
+                const argument1 = generator.valueToCode(block, 'TO', javascript.Order.NONE) || '0';
+                const code = `Math.floor(Math.random() * (Math.floor(${argument1}) - Math.ceil(${argument0}) + 1)) + Math.ceil(${argument0})`;
+                return [code, javascript.Order.FUNCTION_CALL];
+            };
+
+            // 3. ~ / ~ 의 (몫, 나머지) 블록
+            Blockly.Blocks['math_modulo_div'] = {
+                init: function() {
+                    this.appendValueInput('DIVIDEND').setCheck('Number');
+                    this.appendDummyInput().appendField('/');
+                    this.appendValueInput('DIVISOR').setCheck('Number');
+                    this.appendDummyInput().appendField('의').appendField(new Blockly.FieldDropdown([
+                        ['몫', 'QUOTIENT'],
+                        ['나머지', 'MODULO']
+                    ]), 'OP');
+                    this.setInputsInline(true);
+                    this.setOutput(true, 'Number');
+                    this.setColour(230);
+                }
+            };
+            javascript.javascriptGenerator.forBlock['math_modulo_div'] = function(block, generator) {
+                const arg0 = generator.valueToCode(block, 'DIVIDEND', javascript.Order.MODULUS) || '0';
+                const arg1 = generator.valueToCode(block, 'DIVISOR', javascript.Order.MODULUS) || '0';
+                const op = block.getFieldValue('OP');
+                let code;
+                if (op === 'QUOTIENT') {
+                    code = `Math.trunc(${arg0} / ${arg1})`;
+                } else {
+                    code = `(${arg0}) % (${arg1})`;
+                }
+                return [code, javascript.Order.FUNCTION_CALL];
+            };
+
+            // 4. ~ 의 (제곱, 루트, 삼각함수, 로그, 반올림/올림/버림, 절댓값 등) 블록
+            Blockly.Blocks['math_advanced_single'] = {
+                init: function() {
+                    this.appendValueInput('NUM').setCheck('Number');
+                    this.appendDummyInput().appendField('의').appendField(new Blockly.FieldDropdown([
+                        ['제곱', 'POWER2'],
+                        ['루트', 'ROOT'],
+                        ['사인', 'SIN'],
+                        ['코사인', 'COS'],
+                        ['탄젠트', 'TAN'],
+                        ['아크사인', 'ASIN'],
+                        ['아크코사인', 'ACOS'],
+                        ['아크탄젠트', 'ATAN'],
+                        ['로그', 'LOG10'],
+                        ['자연로그', 'LOG'],
+                        ['소수점 부분', 'FRACTION'],
+                        ['소수점 버림값', 'FLOOR'],
+                        ['소수점 올림값', 'CEIL'],
+                        ['소수점 반올림값', 'ROUND'],
+                        ['팩토리얼', 'FACTORIAL'],
+                        ['절댓값', 'ABS']
+                    ]), 'OP');
+                    this.setInputsInline(true);
+                    this.setOutput(true, 'Number');
+                    this.setColour(230);
+                }
+            };
+            javascript.javascriptGenerator.forBlock['math_advanced_single'] = function(block, generator) {
+                const arg = generator.valueToCode(block, 'NUM', javascript.Order.NONE) || '0';
+                const op = block.getFieldValue('OP');
+                let code = '';
+                switch (op) {
+                    case 'POWER2': code = `Math.pow(${arg}, 2)`; break;
+                    case 'ROOT': code = `Math.sqrt(${arg})`; break;
+                    case 'SIN': code = `Math.sin(${arg} * Math.PI / 180)`; break;
+                    case 'COS': code = `Math.cos(${arg} * Math.PI / 180)`; break;
+                    case 'TAN': code = `Math.tan(${arg} * Math.PI / 180)`; break;
+                    case 'ASIN': code = `Math.asin(${arg}) * 180 / Math.PI`; break;
+                    case 'ACOS': code = `Math.acos(${arg}) * 180 / Math.PI`; break;
+                    case 'ATAN': code = `Math.atan(${arg}) * 180 / Math.PI`; break;
+                    case 'LOG10': code = `Math.log10(${arg})`; break;
+                    case 'LOG': code = `Math.log(${arg})`; break;
+                    case 'FRACTION': code = `(${arg}) % 1`; break;
+                    case 'FLOOR': code = `Math.floor(${arg})`; break;
+                    case 'CEIL': code = `Math.ceil(${arg})`; break;
+                    case 'ROUND': code = `Math.round(${arg})`; break;
+                    case 'FACTORIAL': 
+                        code = `(function(n) { let r = 1; for(let i=2; i<=n; i++) r *= i; return r; })(Math.floor(${arg}))`; 
+                        break;
+                    case 'ABS': code = `Math.abs(${arg})`; break;
+                }
+                return [code, javascript.Order.FUNCTION_CALL];
             };
 
             javascript.javascriptGenerator.forBlock['controls_whileUntil'] = function(block, generator) {
