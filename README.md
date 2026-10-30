@@ -1,4 +1,10 @@
 # ☁️ 구르미 (Gurumi Rover)
+<img width="200" height="191" alt="구루미사진02" src="https://github.com/user-attachments/assets/e457185f-40f3-4f22-baca-09668b881189" />
+<img width="200" height="191" alt="구루미사진01" src="https://github.com/user-attachments/assets/2895c997-5587-4319-8e5d-40475935f619" />
+<img width="200" height="191" alt="구루미사진00" src="https://github.com/user-attachments/assets/7dd6b039-9bf0-4f99-a960-1faf3317d746" />
+
+
+
 
 **작은 무한궤도 로버에서 시작하는 시뮬레이션 · 로봇 제어 · 컴퓨터 비전 · Physical AI 프로젝트**
 
