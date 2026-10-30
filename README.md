@@ -65,6 +65,7 @@
 | 3.7V 400mAh 배터리 | 로버의 전원 공급 |
 | ON/OFF 스위치 | 전원 제어 |
 | DC 기어드 모터 2개 | 좌우 무한궤도 구동 |
+<img width="2362" height="1672" alt="SCH_Gurumi_1-P1_2026-10-30" src="https://github.com/user-attachments/assets/65e2acd7-8f10-4385-b708-19e6b658add4" />
 
 ※ 위 목록은 현재 계획된 주요 구성입니다. 최종 PCB 및 실물 조립 결과에 따라 세부 구성이 변경될 수 있습니다.
 
